@@ -362,7 +362,7 @@ impl<'a> Target<'a> {
 
             let lib_name = dep_target.target_config.name.clone();
             let lib_name = lib_name.replace("lib", "-l");
-            cmd.push_str(&lib_name);
+            // cmd.push_str(&lib_name); // kind questionable too?
             cmd.push_str(" ");
         }
 
@@ -374,7 +374,7 @@ impl<'a> Target<'a> {
 
                 let lib_name = target.name.clone();
                 let lib_name = lib_name.replace("lib", "-l");
-                cmd.push_str(&lib_name);
+                // cmd.push_str(&lib_name); // linker error probably from here
                 cmd.push_str(" ");
             }
         }
