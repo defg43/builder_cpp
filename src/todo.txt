@@ -1,0 +1,10 @@
+todo: implement hdr type, project with no executable or dll, 
+	cannot be build or run but is only included by compiler
+	when building in project that this package is used in
+todo: allow config file to be declared without executable, 
+	-> dll package only, compiler can build dll but the roject can not be run
+	-> hdr package only, can not be built or run, only for inclusion
+todo: dll only packages may not contain a main function
+todo: hdr only packages may not contain a main function
+todo: corresponding info messages when trying to 
+	run build and run for projecs that dont support that
