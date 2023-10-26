@@ -304,6 +304,9 @@ pub fn parse_config(path: &str, check_dup_src: bool) -> (BuildConfig, Vec<Target
             deps,
         };
         if target_config.typ != "exe" && target_config.typ != "dll" {
+			if target_config.typ == "hdr" { 
+			log(LogLevel::Error, "header pkg recognied but not yet implemented") 
+			}
             log(LogLevel::Error, "Type must be exe or dll");
             std::process::exit(1);
         }

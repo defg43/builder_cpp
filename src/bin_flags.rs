@@ -569,7 +569,8 @@ pub fn parse_config() -> (
         utils::log(utils::LogLevel::Error, "No targets in config");
         std::process::exit(1);
     } else {
-        //Allow only one exe and set it as the exe_target
+        // Allow only one exe and set it as the exe_target
+        // todo: allow to only build a library and also allow header only pkgs
         for target in &targets {
             if target.typ == "exe" {
                 num_exe += 1;
@@ -579,6 +580,10 @@ pub fn parse_config() -> (
     }
 
     if num_exe != 1 || exe_target.is_none() {
+		for target in targets {
+    	if target.typ == "hdr" {
+    		utils::log(utils::LogLevel::Info, "the type of pkg is header, nothing to build")
+    	} }
         utils::log(
             utils::LogLevel::Error,
             "Exactly one executable target must be specified",
