@@ -171,7 +171,12 @@ impl<'a> Target<'a> {
             dependant_libs,
             packages,
         };
-        target.get_srcs(&target_config.src, target_config);
+        target_config.src
+            .as_ref()
+            .map(
+                |src| target.
+                get_srcs(&src, target_config)
+            ).unwrap_or(vec![]);
         target
     }
 
@@ -195,6 +200,11 @@ impl<'a> Target<'a> {
                     let mut pkg_tgt =
                         Target::new(&pkg.build_config, &target, &pkg.target_configs, &empty);
                     pkg_tgt.build(gen_cc);
+                } else if target.typ == "hdr" {
+                    // add headers from header
+                    log(LogLevel::Info, "There is nothing to build")
+                    // let mut pkg_tgt = 
+                    //    Target::new(&pkg.build_config, &target, &pkg.target_configs, &empty);
                 }
             }
         }

@@ -581,9 +581,11 @@ pub fn parse_config() -> (
 
     if num_exe != 1 || exe_target.is_none() {
 		for target in targets {
-    	if target.typ == "hdr" {
-    		utils::log(utils::LogLevel::Info, "the type of pkg is header, nothing to build")
-    	} }
+    		if target.typ == "hdr" {
+    			utils::log(utils::LogLevel::Info, 
+    			"the type of pkg is header, nothing to build")
+    		} 
+    	}
         utils::log(
             utils::LogLevel::Error,
             "Exactly one executable target must be specified",

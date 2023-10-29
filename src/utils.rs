@@ -88,7 +88,7 @@ pub struct BuildConfig {
 #[derive(Debug, Clone)]
 pub struct TargetConfig {
     pub name: String,
-    pub src: String,
+    pub src: Option<String>, // empty string is used when type is hdr
     pub include_dir: String,
     pub typ: String,
     pub cflags: String,
@@ -257,7 +257,8 @@ pub fn parse_config(path: &str, check_dup_src: bool) -> (BuildConfig, Vec<Target
                     .to_string(),
             );
         }
-
+        
+        let target_type = &target["type"];
         let target_config = TargetConfig {
             name: target["name"]
                 .as_str()
@@ -266,13 +267,16 @@ pub fn parse_config(path: &str, check_dup_src: bool) -> (BuildConfig, Vec<Target
                     std::process::exit(1);
                 })
                 .to_string(),
-            src: target["src"]
+            src: match target_type.as_str() {
+                Some("dll" | "exe") => Some(target["src"]
                 .as_str()
                 .unwrap_or_else(|| {
-                    log(LogLevel::Error, "Could not find src in config file");
+                    log(LogLevel::Info, "Could not find src in config file");
                     std::process::exit(1);
-                })
-                .to_string(),
+                }).to_string()), 
+                Some("hdr") => None,
+                _ => None, 
+            },
             include_dir: target["include_dir"]
                 .as_str()
                 .unwrap_or_else(|| {
@@ -305,10 +309,10 @@ pub fn parse_config(path: &str, check_dup_src: bool) -> (BuildConfig, Vec<Target
         };
         if target_config.typ != "exe" && target_config.typ != "dll" {
 			if target_config.typ == "hdr" { 
-			log(LogLevel::Error, "header pkg recognied but not yet implemented") 
+			log(LogLevel::Warn, "header pkg recognied, implementation might be incomplete") 
 			}
-            log(LogLevel::Error, "Type must be exe or dll");
-            std::process::exit(1);
+            // log(LogLevel::Error, "Type must be exe or dll");
+            // std::process::exit(1);
         }
         tgt.push(target_config);
     }
@@ -332,29 +336,44 @@ pub fn parse_config(path: &str, check_dup_src: bool) -> (BuildConfig, Vec<Target
 
     if check_dup_src {
         for target in &tgt {
-            let mut src_file_names = TargetConfig::get_src_names(&target.src);
-            src_file_names.sort();
-            if src_file_names.len() == 0 {
-                log(
-                    LogLevel::Error,
-                    &format!("No source files found for target: {}", target.name),
-                );
-                std::process::exit(1);
+            match target.typ.as_str() {
+                "dll" | "exe" => {
+                    let mut src_file_names = TargetConfig::get_src_names(
+                        target.src.as_ref()
+                            .unwrap_or_else(|| {log(
+                            LogLevel::Error,
+                            &format!("No source files found for target: {}", 
+                                target.name),
+                        );
+                        std::process::exit(1);}).as_str());
+                    src_file_names.sort();
+                    if src_file_names.len() == 0 {
+                        log(
+                            LogLevel::Error,
+                            &format!("No source files found for target: {}", 
+                                target.name),
+                        );
+                        std::process::exit(1);
+                    } 
+                    for i in 0..src_file_names.len() - 1 {
+                        if src_file_names[i] == src_file_names[i + 1] {
+                            log(LogLevel::Error,
+                                &format!("Duplicate source files found for target: {}",
+                                target.name),
+                            );
+                            log(LogLevel::Error, 
+                                &format!("Source files must be unique"));
+                            log(LogLevel::Error,
+                                &format!("Duplicate file: {}", src_file_names[i]),
+                            );
+                            std::process::exit(1);
+                        }
+                    }
+                },
+                "hdr" => {},
+                _ => {},
             }
-            for i in 0..src_file_names.len() - 1 {
-                if src_file_names[i] == src_file_names[i + 1] {
-                    log(
-                        LogLevel::Error,
-                        &format!("Duplicate source files found for target: {}", target.name),
-                    );
-                    log(LogLevel::Error, &format!("Source files must be unique"));
-                    log(
-                        LogLevel::Error,
-                        &format!("Duplicate file: {}", src_file_names[i]),
-                    );
-                    std::process::exit(1);
-                }
-            }
+                
         }
     }
 
@@ -575,10 +594,13 @@ impl Package {
                 if tgt.typ != "dll" {
                     continue;
                 }
-                tgt.src = format!("{}/{}", source_dir, tgt.src)
-                    .replace("\\", "/")
-                    .replace("/./", "/")
-                    .replace("//", "/");
+                tgt.src = tgt.src.map(|src| {
+                    format!("{}/{}", source_dir, src)
+                        .replace("\\", "/")
+                        .replace("/./", "/")
+                        .replace("//", "/")
+                    });
+
                 let old_inc_dir = tgt.include_dir.clone();
                 tgt.include_dir = format!("./.bld_cpp/includes/{}", name)
                     .replace("\\", "/")
