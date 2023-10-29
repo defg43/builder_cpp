@@ -1,6 +1,8 @@
+use sha1::digest::typenum::Less;
+
 use crate::builder::Target;
 use crate::utils::{self, log, BuildConfig, LogLevel, Package, TargetConfig};
-use std::fs;
+use std::{fs, default};
 use std::io::Write;
 use std::path::Path;
 use std::process::{Command, Stdio};
@@ -578,7 +580,30 @@ pub fn parse_config() -> (
             }
         }
     }
-
+    
+    let target_type = exe_target.map_or("default", |src| {src.typ.as_str()});
+    match (num_exe, target_type) {
+        ( 0, "hdr") => {
+            utils::log(utils::LogLevel::Info, 
+   			"the type of pkg is header, nothing to build");
+        },
+        ( 0, "dll" | "exe") => {
+            utils::log(utils::LogLevel::Error, 
+            "Exactly one executable target must be specified");
+            std::process::exit(1);
+        },
+        ( 1, "dll" | "exe") => {},
+        ( 1.., _) => { 
+            utils::log(utils::LogLevel::Error, 
+            "one or none executable target must be specified");
+            std::process::exit(1);
+        }, 
+        (_, _) => {
+            utils::log(utils::LogLevel::Info, 
+            "uncaugth case")
+        },
+    }
+    /* 
     if num_exe != 1 || exe_target.is_none() {
 		for target in targets {
     		if target.typ == "hdr" {
@@ -591,7 +616,8 @@ pub fn parse_config() -> (
             "Exactly one executable target must be specified",
         );
         std::process::exit(1);
-    }
+    } 
+    */
 
     #[cfg(target_os = "linux")]
     let packages = utils::Package::parse_packages("./config_linux.toml");
