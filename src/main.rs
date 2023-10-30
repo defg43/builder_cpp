@@ -1,4 +1,4 @@
-use builder_cpp::{bin_flags, utils};
+use builder_cpp::{bin_flags, utils::{self, log}};
 use clap::{Parser, Subcommand};
 
 #[derive(Parser, Debug)]
@@ -136,8 +136,16 @@ fn main() {
             .as_ref()
             .map(|x| x.iter().map(|x| x.as_str()).collect());
 
-        utils::log(utils::LogLevel::Log, "Running...");
-        let exe_target = targets.iter().find(|x| x.typ == "exe").unwrap();
-        bin_flags::run(bin_args, &build_config, exe_target, &targets, &packages);
+        let exe_target = targets.iter().find(|x| x.typ == "exe").or(None);
+        match exe_target {
+            Some(target) => {
+                utils::log(utils::LogLevel::Log, "Running...");
+                bin_flags::run(bin_args, &build_config, target, &targets, &packages);
+            },
+            None => {
+                utils::log(utils::LogLevel::Log, "there is nothing to be run");
+            },
+        }
+        
     }
 }
