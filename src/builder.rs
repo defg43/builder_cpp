@@ -5,7 +5,7 @@ use crate::utils::{self, log, BuildConfig, LogLevel, Package, TargetConfig};
 use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
-use rayon::prelude::*;
+use rayon::{prelude::*, string};
 use std::collections::HashMap;
 use std::fs;
 use std::io::{Read, Write};
@@ -95,16 +95,19 @@ impl<'a> Target<'a> {
         for dependant_lib in &target_config.deps {
             for target in targets {
                 if target.name == *dependant_lib {
+                    utils::log(LogLevel::Info, 
+                        &format!("the target name is {0} and deplin is {1}", 
+                        target.name, dependant_lib));
                     dependant_libs.push(Target::new(build_config, target, targets, packages));
                 }
             }
         }
         for dep_lib in &dependant_libs {
-            if dep_lib.target_config.typ != "dll" {
-                utils::log(LogLevel::Error, "Can add only dlls as dependant libs");
+            if dep_lib.target_config.typ == "exe"  {
+                utils::log(LogLevel::Error, "Can add only dlls or hdrs as dependant libs");
                 utils::log(
                     LogLevel::Error,
-                    &format!("Target: {} is not a dll", dep_lib.target_config.name),
+                    &format!("Target: {} is not a dll or hdr", dep_lib.target_config.name),
                 );
                 utils::log(
                     LogLevel::Error,
@@ -133,6 +136,9 @@ impl<'a> Target<'a> {
             }
         }
         if target_config.deps.len() > dependant_libs.len() + packages.len() {
+            for deplib in dependant_libs {
+                utils::log(LogLevel::Error, &format!("dep libs {:?}", deplib.bin_path));  
+            }
             utils::log(LogLevel::Error, "Dependant libs not found");
             utils::log(
                 LogLevel::Error,
@@ -145,7 +151,7 @@ impl<'a> Target<'a> {
                     targets
                         .iter()
                         .map(|x| {
-                            if x.typ == "dll" {
+                            if x.typ == "dll" || x.typ == "hdr" {
                                 x.name.clone()
                             } else {
                                 "".to_string()

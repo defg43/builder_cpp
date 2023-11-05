@@ -550,6 +550,7 @@ impl Package {
                     .arg(&branch)
                     .arg(&repo_https)
                     .arg(&source_dir);
+                println!("{:?}", cmd);
                 let output = cmd.output().expect("Failed to execute git clone");
                 if !output.status.success() {
                     log(
