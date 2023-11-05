@@ -8,3 +8,4 @@ todo: dll only packages may not contain a main function
 todo: hdr only packages may not contain a main function
 todo: corresponding info messages when trying to 
 	run build and run for projecs that dont support that
+todo: automatically convert cmake to toml
